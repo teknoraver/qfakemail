@@ -1,0 +1,5 @@
+QFakeMail is a Qt4 based mailer application written
+for educational purpose only.
+It use Sockets, Data structures as Lists, Windows, Signal
+and Slots functions, the fancy Plastique theme.
+Works on both Unix and Windows, should works on Mac too.

@@ -1,0 +1,9 @@
+Installation note:
+
+Make sure you have Qt4 installed and configured.
+Enter the qfakemail directory and type:
+
+qmake
+make
+
+qfakemail will be built in bin/
