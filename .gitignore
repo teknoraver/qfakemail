@@ -3,3 +3,6 @@ Makefile*
 debug/
 release/
 ui_*.h
+moc_*.cpp
+qrc_*.cpp
+qfakemail
