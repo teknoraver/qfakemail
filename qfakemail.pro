@@ -5,5 +5,9 @@ RESOURCES += qfakemail.qrc
 TEMPLATE = app
 CONFIG += release warn_on thread qt
 TARGET = qfakemail
-QT += network
+QT += network widgets
 RC_FILE = qfakemail.rc
+
+win32 {
+	LIBS += -static
+}
