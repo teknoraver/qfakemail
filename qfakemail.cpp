@@ -49,7 +49,7 @@ QFakeMail::~QFakeMail()
 void QFakeMail::about()
 {
 	QIcon old = windowIcon();
-	setWindowIcon(QIcon(":/matteo.png"));
+	setWindowIcon(QIcon(":/icons/matteo.png"));
 	QMessageBox::about(this, "About QFakeMail", "QFakeMail - a fake mailer<br>by Matteo Croce <a href=\"http://teknoraver.net/\">http://teknoraver.net/</a>");
 	setWindowIcon(old);
 }

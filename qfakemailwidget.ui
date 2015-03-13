@@ -16,7 +16,7 @@
   </property>
   <property name="windowIcon">
    <iconset resource="qfakemail.qrc">
-    <normaloff>:/send.png</normaloff>:/send.png</iconset>
+    <normaloff>:/icons/send.png</normaloff>:/icons/send.png</iconset>
   </property>
   <property name="windowIconText">
    <string/>
@@ -35,7 +35,7 @@
        <string>The SMTP server that will send the mail</string>
       </property>
       <property name="text">
-       <string>Server</string>
+       <string>&amp;Server</string>
       </property>
       <property name="textFormat">
        <enum>Qt::PlainText</enum>
@@ -58,7 +58,7 @@
     <item row="0" column="2">
      <widget class="QLabel" name="l2">
       <property name="text">
-       <string>Port</string>
+       <string>&amp;Port</string>
       </property>
       <property name="buddy">
        <cstring>port</cstring>
@@ -84,7 +84,7 @@
     <item row="1" column="0">
      <widget class="QCheckBox" name="isfrom">
       <property name="text">
-       <string>From</string>
+       <string>&amp;From</string>
       </property>
       <property name="checked">
        <bool>true</bool>
@@ -104,7 +104,7 @@
     <item row="2" column="0">
      <widget class="QLabel" name="l3">
       <property name="text">
-       <string>To</string>
+       <string>&amp;To</string>
       </property>
       <property name="buddy">
        <cstring>to</cstring>
@@ -127,7 +127,7 @@
        <string>The mail subject</string>
       </property>
       <property name="text">
-       <string>Subject</string>
+       <string>S&amp;ubject</string>
       </property>
       <property name="textFormat">
        <enum>Qt::PlainText</enum>
@@ -172,11 +172,11 @@
           <string>Add a file as attachment</string>
          </property>
          <property name="text">
-          <string>Add</string>
+          <string>&amp;Add</string>
          </property>
          <property name="icon">
           <iconset resource="qfakemail.qrc">
-           <normaloff>:/fileopen.png</normaloff>:/fileopen.png</iconset>
+           <normaloff>:/icons/fileopen.png</normaloff>:/icons/fileopen.png</iconset>
          </property>
         </widget>
        </item>
@@ -196,11 +196,11 @@
           <string>Remove an attachment</string>
          </property>
          <property name="text">
-          <string>Remove</string>
+          <string>&amp;Remove</string>
          </property>
          <property name="icon">
           <iconset resource="qfakemail.qrc">
-           <normaloff>:/editdelete.png</normaloff>:/editdelete.png</iconset>
+           <normaloff>:/icons/editdelete.png</normaloff>:/icons/editdelete.png</iconset>
          </property>
         </widget>
        </item>
@@ -220,7 +220,7 @@
       </property>
       <property name="icon">
        <iconset resource="qfakemail.qrc">
-        <normaloff>:/send.png</normaloff>:/send.png</iconset>
+        <normaloff>:/icons/send.png</normaloff>:/icons/send.png</iconset>
       </property>
       <property name="autoDefault">
        <bool>true</bool>
