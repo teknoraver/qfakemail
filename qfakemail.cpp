@@ -37,6 +37,11 @@ QFakeMail::QFakeMail() : QMainWindow(0)
 	connect(addfile, SIGNAL(clicked()), SLOT(addFile()));
 	connect(send, SIGNAL(clicked()), SLOT(sendSlot()));
 	connect(actionAbout, SIGNAL(triggered()), SLOT(about()));
+
+	connect(&sock, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(gotErrorSlot()));
+	connect(&sock, SIGNAL(disconnected()), SLOT(disconnected()));
+	connect(&sock, SIGNAL(connected()), SLOT(connected()));
+	connect(&sock, SIGNAL(readyRead()), SLOT(readed()));
 }
 
 QFakeMail::~QFakeMail()
@@ -106,10 +111,6 @@ void QFakeMail::sendSlot()
 	pd = new QProgressDialog("Sending", "Abort", 0, 7 + files->count(), this, Qt::Dialog);
 	connect(pd, SIGNAL(canceled()), SLOT(reEnableAll()));
 	qApp->processEvents();
-	connect(&sock, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(gotErrorSlot()));
-	connect(&sock, SIGNAL(disconnected()), SLOT(disconnected()));
-	connect(&sock, SIGNAL(connected()), SLOT(connected()));
-	connect(&sock, SIGNAL(readyRead()), SLOT(readed()));
 	sock.connectToHost(server->text(), port->value(), QIODevice::ReadWrite);
 }
 
