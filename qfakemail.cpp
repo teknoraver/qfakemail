@@ -49,7 +49,7 @@ QFakeMail::~QFakeMail()
 void QFakeMail::about()
 {
 	QIcon old = windowIcon();
-	setWindowIcon(QIcon(":/matteo.png"));
+	setWindowIcon(QIcon(":/icons/matteo.png"));
 	QMessageBox::about(this, "About QFakeMail", "QFakeMail - a fake mailer<br>by Matteo Croce <a href=\"http://teknoraver.net/\">http://teknoraver.net/</a>");
 	setWindowIcon(old);
 }
@@ -76,10 +76,7 @@ void QFakeMail::removeFile()
 
 void QFakeMail::addFile()
 {
-	QStringList paths = QFileDialog::getOpenFileNames(this);
-	for(int i = 0; i < paths.size(); i++) {
-		QString path = paths[i];
-
+	foreach(QString path, QFileDialog::getOpenFileNames(this)) {
 		QFileInfo info(path);
 		if(!info.exists())
 			continue;
@@ -106,7 +103,7 @@ void QFakeMail::sendSlot()
 {
 	QApplication::setOverrideCursor(Qt::WaitCursor);
 	setEnabled(false);
-	pd = new QProgressDialog("Sending", "Abort", 0, 100, this, Qt::Dialog);
+	pd = new QProgressDialog("Sending", "Abort", 0, 7 + files->count(), this, Qt::Dialog);
 	connect(pd, SIGNAL(canceled()), SLOT(reEnableAll()));
 	qApp->processEvents();
 	connect(&sock, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(gotErrorSlot()));
@@ -142,7 +139,7 @@ void QFakeMail::readed()
 				error("Bad response from server:\n" + read);
 				return;
 			}
-			pd->setValue(5);
+			pd->setValue(2);
 			data += "HELO QFakeMail\r\n";
 			state = MAIL_FROM;
 			break;
@@ -151,7 +148,7 @@ void QFakeMail::readed()
 				error("Bad response from server:\n" + read);
 				return;
 			}
-			pd->setValue(9);
+			pd->setValue(3);
 			data += "MAIL FROM:<" + (isfrom->isChecked() ? from->text() : to->text()) + ">\r\n";
 			state = RCPT_TO;
 			break;
@@ -160,7 +157,7 @@ void QFakeMail::readed()
 				error("Bad response from server:\n" + read);
 				return;
 			}
-			pd->setValue(13);
+			pd->setValue(4);
 			data += "RCPT TO:<" + to->text() + ">\r\n";
 			state = DATA;
 			break;
@@ -169,7 +166,7 @@ void QFakeMail::readed()
 				error("Bad response from server:\n" + read);
 				return;
 			}
-			pd->setValue(17);
+			pd->setValue(5);
 			data += "DATA\r\n";
 			state = BODY;
 			break;
@@ -197,7 +194,7 @@ void QFakeMail::readed()
 			data += "\r\n" +
 				message->toPlainText().replace("\r\n.\r\n", "\r\n..\r\n") + "\r\n\r\n";
 			sock.write(data);
-			pd->setValue(20);
+			pd->setValue(6);
 			qApp->processEvents();
 
 			for(int i = 0; i < encoded.size(); i++) {
@@ -220,7 +217,7 @@ void QFakeMail::readed()
 				}
 
 				sock.write("\r\n\r\n");
-				pd->setValue(60 / files->count() * i + 30);
+				pd->setValue(7 + i);
 				qApp->processEvents();
 			}
 
@@ -236,7 +233,7 @@ void QFakeMail::readed()
 				error("Bad response from server:\n" + read);
 				return;
 			}
-			pd->setValue(99);
+			pd->setValue(pd->maximum() - 1);
 			data += "QUIT\r\n";
 			state = DISCONNECT;
 			break;
@@ -245,11 +242,11 @@ void QFakeMail::readed()
 				error("Bad response from server:\n" + read);
 				return;
 			}
-			pd->setValue(100);
+			pd->setValue(pd->maximum());
 			qApp->processEvents();
 			sock.flush();
 			sock.disconnectFromHost();
-			QMessageBox::information(this, "Done", "Message has been sent", QMessageBox::Ok, QMessageBox::NoButton);
+			QMessageBox::information(this, "Done", "Message has been sent");
 			reEnableAll();
 			return;
 	}
@@ -266,7 +263,7 @@ void QFakeMail::connected()
 void QFakeMail::error(const QString &err)
 {
 	sock.disconnectFromHost();
-	QMessageBox::critical(this, "Error", err, QMessageBox::Ok, QMessageBox::NoButton);
+	QMessageBox::critical(this, "Error", err);
 	reEnableAll();
 }
 
