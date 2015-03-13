@@ -55,8 +55,6 @@ private:
 	QProgressDialog *pd;
 	QTcpSocket sock;
 	enum {HELO, MAIL_FROM, RCPT_TO, DATA, BODY, QUIT, DISCONNECT} state;
-	inline void encodeblock(const char[3], char[4]);
-	inline void encodelastblock(const char[3], char[4], int);
 };
 
 #endif
