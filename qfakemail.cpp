@@ -44,7 +44,6 @@ QFakeMail::~QFakeMail()
 	foreach(QTemporaryFile *i, encoded)
 		delete i;
 	encoded.clear();
-	mimes.clear();
 }
 
 void QFakeMail::about()
@@ -71,7 +70,6 @@ void QFakeMail::filesSelected()
 void QFakeMail::removeFile()
 {
 	delete encoded.takeAt(files->currentRow());
-	mimes.takeAt(files->currentRow());
 	files->takeItem(files->currentRow());
 	removefile->setEnabled(files->count());
 }
@@ -92,8 +90,8 @@ void QFakeMail::addFile()
 		in.open(QIODevice::ReadOnly);
 		out->setAutoRemove(true);
 		out->open();
+		out->write(mimedb.mimeTypeForFile(path).name().toLocal8Bit() + "\r\n");
 		encoded.append(out);
-		mimes.append(mimedb.mimeTypeForFile(path).name());
 		QByteArray inbuf;
 		inbuf = in.read(57);
 		while(inbuf.size() > 0) {
@@ -197,25 +195,24 @@ void QFakeMail::readed()
 					"Content-Disposition: inline\r\n";
 			}
 			data += "\r\n" +
-				message->toPlainText().replace("\r\n.", "\r\n..").replace('\n', "\r\n.") + "\r\n"
-				"\r\n";
+				message->toPlainText().replace("\r\n.\r\n", "\r\n..\r\n") + "\r\n\r\n";
 			sock.write(data);
 			pd->setValue(20);
 			qApp->processEvents();
 
 			for(int i = 0; i < encoded.size(); i++) {
+				encoded[i]->reset();
 				data = QByteArray();
 				data += "--" + boundary + "\r\n"
-					"Content-Type: " + mimes[i] + ";\r\n"
+					"Content-Type: " + encoded[i]->readLine().trimmed() + ";\r\n"
 					"  name=\"" + files->item(i)->text() + "\"\r\n"
 					"Content-Transfer-Encoding: base64\r\n"
 					"Content-Disposition: attachment;\r\n"
-					"\tfilename=\"" + files->item(i)->text() + "\"\r\n"
+					"  filename=\"" + files->item(i)->text() + "\"\r\n"
 					"\r\n";
 				sock.write(data);
 
 				char buf[CHUNK_SIZE];
-				encoded[i]->reset();
 				int readed = encoded[i]->read(buf, CHUNK_SIZE);
 				while(readed > 0) {
 					sock.write(buf, readed);
@@ -229,7 +226,7 @@ void QFakeMail::readed()
 
 			data = QByteArray();
 			if(files->count())
-				data += "--" + boundary + "\r\n";
+				data += "--" + boundary + "--\r\n";
 			data += ".\r\n";
 			state = QUIT;
 			break;

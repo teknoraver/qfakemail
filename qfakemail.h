@@ -52,7 +52,6 @@ private slots:
 private:
 	QList<QTemporaryFile*> encoded;
 	QMimeDatabase mimedb;
-	QStringList mimes;
 	QProgressDialog *pd;
 	QTcpSocket sock;
 	enum {HELO, MAIL_FROM, RCPT_TO, DATA, BODY, QUIT, DISCONNECT} state;
