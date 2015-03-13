@@ -16,15 +16,12 @@
  *  along with this program.  If not, see <http://www.gnu.org/licenses/>.   *
  ****************************************************************************/
 
-#include "qfakemail.h"
-
 #include <QApplication>
 #include <QFileDialog>
 #include <QList>
-#include <QTemporaryFile>
-#include <QProgressDialog>
-#include <QtNetwork/QTcpSocket>
 #include <QMessageBox>
+
+#include "qfakemail.h"
 
 #define CHUNK_SIZE	0x10000
 
@@ -47,6 +44,7 @@ QFakeMail::~QFakeMail()
 	foreach(QTemporaryFile *i, encoded)
 		delete i;
 	encoded.clear();
+	mimes.clear();
 }
 
 void QFakeMail::about()
@@ -60,9 +58,9 @@ void QFakeMail::about()
 void QFakeMail::change()
 {
 	send->setEnabled(
-			server->text().length() &&
-			(!isfrom->isChecked() || from->text().length()) &&
-			to->text().length());
+		server->text().length() &&
+		(!isfrom->isChecked() || from->text().length()) &&
+		to->text().length());
 }
 
 void QFakeMail::filesSelected()
@@ -73,29 +71,36 @@ void QFakeMail::filesSelected()
 void QFakeMail::removeFile()
 {
 	delete encoded.takeAt(files->currentRow());
+	mimes.takeAt(files->currentRow());
 	files->takeItem(files->currentRow());
 	removefile->setEnabled(files->count());
 }
 
 void QFakeMail::addFile()
 {
-	QString path = QFileDialog::getOpenFileName(this);
-	if(path.length())
-		files->addItem(path.right(path.count() - path.lastIndexOf(QChar('/')) - 1));
-	QFile in(path, this);
-	QTemporaryFile *out = new QTemporaryFile(QDir::tempPath() + "/QFakeMailB64", this);
-	in.open(QIODevice::ReadOnly);
-	out->setAutoRemove(true);
-	out->open();
-	encoded.append(out);
-	char inbuf[57], outbuf[78];
-	int readed = in.read(inbuf, 57);
-	while(readed > 0) {
-		int written = base64_encode(inbuf, outbuf, readed);
-		out->write(outbuf, written);
-		readed = in.read(inbuf, 57);
+	QStringList paths = QFileDialog::getOpenFileNames(this);
+	for(int i = 0; i < paths.size(); i++) {
+		QString path = paths[i];
+
+		QFileInfo info(path);
+		if(!info.exists())
+			continue;
+
+		files->addItem(info.fileName());
+		QFile in(path, this);
+		QTemporaryFile *out = new QTemporaryFile(QDir::tempPath() + "/QFakeMailB64", this);
+		in.open(QIODevice::ReadOnly);
+		out->setAutoRemove(true);
+		out->open();
+		encoded.append(out);
+		mimes.append(mimedb.mimeTypeForFile(path).name());
+		QByteArray inbuf;
+		inbuf = in.read(57);
+		while(inbuf.size() > 0) {
+			out->write(inbuf.toBase64() + "\r\n");
+			inbuf = in.read(57);
+		}
 	}
-	out->reset();
 	removefile->setEnabled(files->count() && files->currentRow() > 0);
 }
 
@@ -192,7 +197,7 @@ void QFakeMail::readed()
 					"Content-Disposition: inline\r\n";
 			}
 			data += "\r\n" +
-				message->toPlainText().replace('\n', "\r\n.").replace("\r\n.", "\r\n..") + "\r\n"
+				message->toPlainText().replace("\r\n.", "\r\n..").replace('\n', "\r\n.") + "\r\n"
 				"\r\n";
 			sock.write(data);
 			pd->setValue(20);
@@ -201,7 +206,7 @@ void QFakeMail::readed()
 			for(int i = 0; i < encoded.size(); i++) {
 				data = QByteArray();
 				data += "--" + boundary + "\r\n"
-					"Content-Type: application/octet-stream;\r\n"
+					"Content-Type: " + mimes[i] + ";\r\n"
 					"  name=\"" + files->item(i)->text() + "\"\r\n"
 					"Content-Transfer-Encoding: base64\r\n"
 					"Content-Disposition: attachment;\r\n"
@@ -210,6 +215,7 @@ void QFakeMail::readed()
 				sock.write(data);
 
 				char buf[CHUNK_SIZE];
+				encoded[i]->reset();
 				int readed = encoded[i]->read(buf, CHUNK_SIZE);
 				while(readed > 0) {
 					sock.write(buf, readed);
@@ -272,41 +278,4 @@ void QFakeMail::reEnableAll()
 	pd->deleteLater();
 	setEnabled(true);
 	QApplication::setOverrideCursor(Qt::ArrowCursor);
-}
-
-inline void QFakeMail::encodeblock(const char in[3], char out[4])
-{
-	const char code[] = 
-			"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-	out[0] = code[(in[0] & 255) >> 2];
-	out[1] = code[((in[0] & 0x03) << 4) | ((in[1] & 0xf0) >> 4)];
-	out[2] = code[((in[1] & 0x0f) << 2) | ((in[2] & 0xc0) >> 6)];
-	out[3] = code[in[2] & 0x3f];
-}
-
-inline void QFakeMail::encodelastblock(const char in[3], char out[4], int len)
-{
-	const char code[] = 
-			"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=";
-	out[0] = code[(in[0] & 255) >> 2];
-	out[1] = code[((in[0] & 0x03) << 4) | ((in[1] & 0xf0) >> 4)];
-	out[2] = (len & 2 ? code[((in[1] & 0x0f) << 2) | ((in[2] & 0xc0) >> 6)] : '=');
-	out[3] = '=';
-}
-
-inline int QFakeMail::base64_encode(const char *in, char *out, int len)
-{
-	int i = 0, j = 0;
-	while(i < len - len % 3) {
-		encodeblock(in + i, out + j);
-		i += 3;
-		j += 4;
-	}
-	if(len % 3) {
-		encodelastblock(in + i, out + j, len % 3);
-		j += 4;
-	}
-	out[j] = '\r';
-	out[j + 1] = '\n';
-	return j + 2;
 }

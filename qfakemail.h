@@ -22,7 +22,8 @@
 #include <QMainWindow>
 #include <QTemporaryFile>
 #include <QProgressDialog>
-#include <QtNetwork/QTcpSocket>
+#include <QTcpSocket>
+#include <QMimeDatabase>
 
 #include "ui_qfakemailwidget.h"
 
@@ -50,10 +51,11 @@ private slots:
 
 private:
 	QList<QTemporaryFile*> encoded;
+	QMimeDatabase mimedb;
+	QStringList mimes;
 	QProgressDialog *pd;
 	QTcpSocket sock;
 	enum {HELO, MAIL_FROM, RCPT_TO, DATA, BODY, QUIT, DISCONNECT} state;
-	inline int base64_encode(const char*, char*, int);
 	inline void encodeblock(const char[3], char[4]);
 	inline void encodelastblock(const char[3], char[4], int);
 };
