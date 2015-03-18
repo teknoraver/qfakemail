@@ -176,11 +176,11 @@ void QFakeMail::readed()
 				error("Bad response from server:\n" + read);
 				return;
 			}
-			QString boundary("QFakeMail-Boundary-IL0v3T3chn0");
+			QString boundary("QFakeMail-Boundary-teknoraver");
 			data += "From: " + (isfrom->isChecked() ? from->text() : "") + "\r\n"
 				"To: " + to->text() + "\r\n"
-				"Subject: " + subject->text() + "\r\n"
-				"User-Agent: QFakeMail/1.0\r\n";
+				"Subject: " + encode(subject->text()) + "\r\n"
+				"User-Agent: QFakeMail/1.1\r\n";
 			if(files->count()) {
 				data += "MIME-Version: 1.0\r\n"
 					"Content-Type: Multipart/Mixed;\r\n"
@@ -252,6 +252,21 @@ void QFakeMail::readed()
 			return;
 	}
 	sock.write(data);
+}
+
+bool QFakeMail::isUtf8(QString orig)
+{
+	for(const QChar *data = orig.constData(); !data->isNull(); data++)
+		if(data->unicode() > 127)
+			return true;
+	return false;
+}
+
+QString QFakeMail::encode(QString orig)
+{
+	if(isUtf8(orig))
+		return "=?UTF-8?B?" + QString(orig.toUtf8().toBase64()) + "?=";
+	return orig;
 }
 
 void QFakeMail::connected()

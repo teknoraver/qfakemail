@@ -55,6 +55,8 @@ private:
 	QProgressDialog *pd;
 	QTcpSocket sock;
 	enum {HELO, MAIL_FROM, RCPT_TO, DATA, BODY, QUIT, DISCONNECT} state;
+	bool isUtf8(QString);
+	QString encode(QString);
 };
 
 #endif
