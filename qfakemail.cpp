@@ -23,6 +23,7 @@
 
 #include "qfakemail.h"
 
+#define B64L	57
 #define CHUNK_SIZE	0x10000
 
 QFakeMail::QFakeMail() : QMainWindow(0)
@@ -95,10 +96,10 @@ void QFakeMail::addFile()
 		out->write(mimedb.mimeTypeForFile(path).name().toLocal8Bit() + "\r\n");
 		encoded.append(out);
 		QByteArray inbuf;
-		inbuf = in.read(57);
+		inbuf = in.read(B64L);
 		while(inbuf.size() > 0) {
 			out->write(inbuf.toBase64() + "\r\n");
-			inbuf = in.read(57);
+			inbuf = in.read(B64L);
 		}
 	}
 	removefile->setEnabled(files->count() && files->currentRow() > 0);
@@ -180,27 +181,33 @@ void QFakeMail::readed()
 			data += "From: " + (isfrom->isChecked() ? from->text() : "") + "\r\n"
 				"To: " + to->text() + "\r\n"
 				"Subject: " + encode(subject->text()) + "\r\n"
-				"User-Agent: QFakeMail/1.1\r\n";
+				"User-Agent: QFakeMail/1.1\r\n"
+				"Content-Type: text/plain; charset=UTF-8\r\n";
 			if(files->count()) {
 				data += "MIME-Version: 1.0\r\n"
 					"Content-Type: Multipart/Mixed;\r\n"
 					"  boundary=\"" + boundary + "\"\r\n"
 					"\r\n"
 					"--" + boundary + "\r\n"
-					"Content-Type: text/plain;\r\n"
-					"  charset=\"us-ascii\"\r\n"
-					"Content-Transfer-Encoding: 7bit\r\n"
 					"Content-Disposition: inline\r\n";
 			}
-			data += "\r\n" +
-				message->toPlainText().replace("\r\n.\r\n", "\r\n..\r\n") + "\r\n\r\n";
+			QString body = message->toPlainText();
+			if(isUtf8(body)) {
+				data += "Content-Transfer-Encoding: base64\r\n\r\n";
+				for(int i = 0; i < body.length(); i += B64L)
+					data += body.mid(i, B64L).toUtf8().toBase64() + "\r\n";
+			} else {
+				data += "Content-Transfer-Encoding: 7bit\r\n\r\n";
+				data += body.replace("\r\n.\r\n", "\r\n..\r\n");
+			}
+			data += "\r\n\r\n";
 			sock.write(data);
 			pd->setValue(6);
 			qApp->processEvents();
 
 			for(int i = 0; i < encoded.size(); i++) {
 				encoded[i]->reset();
-				data = QByteArray();
+				data.clear();
 				data += "--" + boundary + "\r\n"
 					"Content-Type: " + encoded[i]->readLine().trimmed() + ";\r\n"
 					"  name=\"" + files->item(i)->text() + "\"\r\n"
