@@ -62,10 +62,11 @@ void QFakeMail::about()
 
 void QFakeMail::change()
 {
+	QRegExp email("\\w+@\\w+\\.\\w+");
 	send->setEnabled(
 		server->text().length() &&
-		(!isfrom->isChecked() || from->text().length()) &&
-		to->text().length());
+		(!isfrom->isChecked() || from->text().contains(email)) &&
+		to->text().contains(email));
 }
 
 void QFakeMail::filesSelected()
