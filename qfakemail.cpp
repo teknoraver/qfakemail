@@ -62,7 +62,7 @@ void QFakeMail::about()
 
 void QFakeMail::change()
 {
-	QRegExp email("\\w+@\\w+\\.\\w+");
+	QRegExp email(".@[^.]+\\..");
 	send->setEnabled(
 		server->text().length() &&
 		(!isfrom->isChecked() || from->text().contains(email)) &&
