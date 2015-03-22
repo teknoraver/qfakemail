@@ -26,7 +26,7 @@
 #define B64L	57
 #define CHUNK_SIZE	0x10000
 
-QFakeMail::QFakeMail() : QMainWindow(0)
+QFakeMail::QFakeMail() : QMainWindow(0), email("([a-z0-9._%+-]+@[a-z0-9-]+\\.[a-z0-9.-]+)", Qt::CaseInsensitive)
 {
 	setupUi(this);
 	connect(server, SIGNAL(textEdited(const QString&)), SLOT(change()));
@@ -62,7 +62,6 @@ void QFakeMail::about()
 
 void QFakeMail::change()
 {
-	QRegExp email(".@[^.]+\\..");
 	send->setEnabled(
 		server->text().length() &&
 		(!isfrom->isChecked() || from->text().contains(email)) &&
@@ -146,24 +145,38 @@ void QFakeMail::readed()
 			data += "HELO QFakeMail\r\n";
 			state = MAIL_FROM;
 			break;
-		case MAIL_FROM:
+		case MAIL_FROM: {
+			QString f = from->text();
+			if(isfrom->isChecked() && email.indexIn(f) != -1) {
+				QStringList list = email.capturedTexts();
+				if(list.size() > 1)
+					f = list[1];
+			}
 			if(read.left(3).toUShort() != 250) {
 				error("Bad response from server:\n" + read);
 				return;
 			}
 			pd->setValue(3);
-			data += "MAIL FROM:<" + (isfrom->isChecked() ? from->text() : to->text()) + ">\r\n";
+			data += "MAIL FROM:<" + (isfrom->isChecked() ? f : to->text()) + ">\r\n";
 			state = RCPT_TO;
 			break;
-		case RCPT_TO:
+		}
+		case RCPT_TO: {
+			QString t = to->text();
+			if(email.indexIn(t) != -1) {
+				QStringList list = email.capturedTexts();
+				if(list.size() > 1)
+					t = list[1];
+			}
 			if(read.left(3).toUShort() != 250) {
 				error("Bad response from server:\n" + read);
 				return;
 			}
 			pd->setValue(4);
-			data += "RCPT TO:<" + to->text() + ">\r\n";
+			data += "RCPT TO:<" + t + ">\r\n";
 			state = DATA;
 			break;
+		}
 		case DATA:
 			if(read.left(3).toUShort() != 250) {
 				error("Bad response from server:\n" + read);
