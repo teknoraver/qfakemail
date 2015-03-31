@@ -47,8 +47,7 @@ QFakeMail::QFakeMail() : QMainWindow(0), email("([a-z0-9._%+-]+@[a-z0-9-]+\\.[a-
 
 QFakeMail::~QFakeMail()
 {
-	foreach(QTemporaryFile *i, encoded)
-		delete i;
+	qDeleteAll(encoded);
 	encoded.clear();
 }
 
