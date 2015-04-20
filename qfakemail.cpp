@@ -23,7 +23,6 @@
 
 #include "qfakemail.h"
 
-#define B64L	57
 #define CHUNK_SIZE	0x10000
 
 QFakeMail::QFakeMail() : QMainWindow(0), email("([a-z0-9._%+-]+@[a-z0-9-]+\\.[a-z0-9.-]+)", Qt::CaseInsensitive)
@@ -95,11 +94,12 @@ void QFakeMail::addFile()
 		out->write(mimedb.mimeTypeForFile(path).name().toLocal8Bit() + "\r\n");
 		encoded.append(out);
 		QByteArray inbuf;
-		inbuf = in.read(B64L);
+		inbuf = in.read(57);
 		while(inbuf.size() > 0) {
 			out->write(inbuf.toBase64() + "\r\n");
-			inbuf = in.read(B64L);
+			inbuf = in.read(57);
 		}
+		out->flush();
 	}
 	removefile->setEnabled(files->count() && files->currentRow() > 0);
 }
@@ -207,8 +207,9 @@ void QFakeMail::readed()
 			QString body = message->toPlainText();
 			if(isUtf8(body)) {
 				data += "Content-Transfer-Encoding: base64\r\n\r\n";
-				for(int i = 0; i < body.length(); i += B64L)
-					data += body.mid(i, B64L).toUtf8().toBase64() + "\r\n";
+				QByteArray b64 = body.toUtf8().toBase64();
+				for(int i = 0; i < b64.length(); i += 76)
+					data += b64.mid(i, 76) + "\r\n";
 			} else {
 				data += "Content-Transfer-Encoding: 7bit\r\n\r\n";
 				data += body.replace("\r\n.\r\n", "\r\n..\r\n");
