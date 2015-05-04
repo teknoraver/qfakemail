@@ -20,6 +20,8 @@
 #include <QFileDialog>
 #include <QList>
 #include <QMessageBox>
+#include <QCompleter>
+#include <QSettings>
 
 #include "qfakemail.h"
 
@@ -42,6 +44,15 @@ QFakeMail::QFakeMail() : QMainWindow(0), email("([a-z0-9._%+-]+@[a-z0-9-]+\\.[a-
 	connect(&sock, SIGNAL(disconnected()), SLOT(disconnected()));
 	connect(&sock, SIGNAL(connected()), SLOT(connected()));
 	connect(&sock, SIGNAL(readyRead()), SLOT(readed()));
+
+	QSettings settings;
+	int size = settings.beginReadArray("recents");
+	for (int i = 0; i < size; i++) {
+		settings.setArrayIndex(i);
+		recents << settings.value("server").toString();
+	}
+	settings.endArray();
+	server->setCompleter(new QCompleter(recents, server));
 }
 
 QFakeMail::~QFakeMail()
@@ -295,6 +306,20 @@ void QFakeMail::connected()
 	pd->setLabelText("Sending");
 	pd->setValue(1);
 	state = HELO;
+	if(!recents.contains(server->text(), Qt::CaseInsensitive)) {
+		recents << server->text();
+		if(recents.size() > 4)
+			recents.removeFirst();
+
+		QSettings settings;
+		settings.beginWriteArray("recents");
+		for(int i = 0; i < recents.size(); i++) {
+			settings.setArrayIndex(i);
+			settings.setValue("server", recents[i]);
+		}
+		settings.endArray();
+		server->setCompleter(new QCompleter(recents, server));
+	}
 }
 
 void QFakeMail::error(const QString &err)

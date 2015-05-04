@@ -25,6 +25,8 @@
 int main(int argc, char *argv[])
 {
 	QApplication a(argc, argv);
+	a.setOrganizationName("teknoraver");
+	a.setApplicationName("QFakeMail");
 //	QApplication::setStyle(new QPlastiqueStyle());
 //	QApplication::setPalette(QApplication::style()->standardPalette());
 	QFakeMail qfm;

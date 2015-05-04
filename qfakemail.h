@@ -24,12 +24,13 @@
 #include <QProgressDialog>
 #include <QTcpSocket>
 #include <QMimeDatabase>
+#include <QStringList>
 
 #include "ui_qfakemailwidget.h"
 
 class QFakeMail: public QMainWindow, private Ui::MainWindow
 {
-	Q_OBJECT
+Q_OBJECT
 
 public:
 	QFakeMail();
@@ -58,6 +59,7 @@ private:
 	enum {HELO, MAIL_FROM, RCPT_TO, DATA, BODY, QUIT, DISCONNECT} state;
 	bool isUtf8(QString);
 	QString encode(QString);
+	QStringList recents;
 };
 
 #endif
