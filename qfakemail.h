@@ -25,6 +25,7 @@
 #include <QTcpSocket>
 #include <QMimeDatabase>
 #include <QStringList>
+#include <QRegularExpression>
 
 #include "ui_qfakemailwidget.h"
 
@@ -34,7 +35,7 @@ Q_OBJECT
 
 public:
 	QFakeMail();
-	~QFakeMail();
+	~QFakeMail() override;
 
 private slots:
 	void change();
@@ -55,7 +56,7 @@ private:
 	QMimeDatabase mimedb;
 	QProgressDialog *pd;
 	QTcpSocket sock;
-	QRegExp email;
+	QRegularExpression email;
 	enum {HELO, MAIL_FROM, RCPT_TO, DATA, BODY, QUIT, DISCONNECT} state;
 	bool isUtf8(QString);
 	QString encode(QString);

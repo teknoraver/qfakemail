@@ -27,23 +27,23 @@
 
 #define CHUNK_SIZE	0x10000
 
-QFakeMail::QFakeMail() : QMainWindow(0), email("([a-z0-9._%+-]+@[a-z0-9-]+\\.[a-z0-9.-]+)", Qt::CaseInsensitive)
+QFakeMail::QFakeMail() : QMainWindow(nullptr), email("([a-z0-9._%+-]+@[a-z0-9-]+\\.[a-z0-9.-]+)", QRegularExpression::CaseInsensitiveOption)
 {
 	setupUi(this);
-	connect(server, SIGNAL(textEdited(const QString&)), SLOT(change()));
-	connect(isfrom, SIGNAL(toggled(bool)), SLOT(change()));
-	connect(from, SIGNAL(textEdited(const QString&)), SLOT(change()));
-	connect(to, SIGNAL(textEdited(const QString&)), SLOT(change()));
-	connect(files, SIGNAL(itemSelectionChanged()), SLOT(filesSelected()));
-	connect(removefile, SIGNAL(clicked()), SLOT(removeFile()));
-	connect(addfile, SIGNAL(clicked()), SLOT(addFile()));
-	connect(send, SIGNAL(clicked()), SLOT(sendSlot()));
-	connect(actionAbout, SIGNAL(triggered()), SLOT(about()));
+	connect(server, &QLineEdit::textEdited, this, &QFakeMail::change);
+	connect(isfrom, &QAbstractButton::toggled, this, &QFakeMail::change);
+	connect(from, &QLineEdit::textEdited, this, &QFakeMail::change);
+	connect(to, &QLineEdit::textEdited, this, &QFakeMail::change);
+	connect(files, &QListWidget::itemSelectionChanged, this, &QFakeMail::filesSelected);
+	connect(removefile, &QAbstractButton::clicked, this, &QFakeMail::removeFile);
+	connect(addfile, &QAbstractButton::clicked, this, &QFakeMail::addFile);
+	connect(send, &QAbstractButton::clicked, this, &QFakeMail::sendSlot);
+	connect(actionAbout, &QAction::triggered, this, &QFakeMail::about);
 
-	connect(&sock, SIGNAL(error(QAbstractSocket::SocketError)), SLOT(gotErrorSlot()));
-	connect(&sock, SIGNAL(disconnected()), SLOT(disconnected()));
-	connect(&sock, SIGNAL(connected()), SLOT(connected()));
-	connect(&sock, SIGNAL(readyRead()), SLOT(readed()));
+	connect(&sock, &QAbstractSocket::errorOccurred, this, &QFakeMail::gotErrorSlot);
+	connect(&sock, &QAbstractSocket::disconnected, this, &QFakeMail::disconnected);
+	connect(&sock, &QAbstractSocket::connected, this, &QFakeMail::connected);
+	connect(&sock, &QIODevice::readyRead, this, &QFakeMail::readed);
 
 	QSettings settings;
 	int size = settings.beginReadArray("recents");
@@ -91,17 +91,21 @@ void QFakeMail::removeFile()
 
 void QFakeMail::addFile()
 {
-	foreach(QString path, QFileDialog::getOpenFileNames(this)) {
+	for(const QString &path : QFileDialog::getOpenFileNames(this)) {
 		QFileInfo info(path);
 		if(!info.exists())
 			continue;
 
-		files->addItem(info.fileName());
 		QFile in(path, this);
+		if(!in.open(QIODevice::ReadOnly))
+			continue;
 		QTemporaryFile *out = new QTemporaryFile(QDir::tempPath() + "/QFakeMailB64", this);
-		in.open(QIODevice::ReadOnly);
 		out->setAutoRemove(true);
-		out->open();
+		if(!out->open()) {
+			delete out;
+			continue;
+		}
+		files->addItem(info.fileName());
 		out->write(mimedb.mimeTypeForFile(path).name().toLocal8Bit() + "\r\n");
 		encoded.append(out);
 		QByteArray inbuf;
@@ -120,7 +124,7 @@ void QFakeMail::sendSlot()
 	QApplication::setOverrideCursor(Qt::WaitCursor);
 	setEnabled(false);
 	pd = new QProgressDialog("Sending", "Abort", 0, 7 + files->count(), this, Qt::Dialog);
-	connect(pd, SIGNAL(canceled()), SLOT(reEnableAll()));
+	connect(pd, &QProgressDialog::canceled, this, &QFakeMail::reEnableAll);
 	qApp->processEvents();
 	sock.connectToHost(server->text(), port->value(), QIODevice::ReadWrite);
 }
@@ -157,11 +161,9 @@ void QFakeMail::readed()
 			break;
 		case MAIL_FROM: {
 			QString f = from->text();
-			if(isfrom->isChecked() && email.indexIn(f) != -1) {
-				QStringList list = email.capturedTexts();
-				if(list.size() > 1)
-					f = list[1];
-			}
+			QRegularExpressionMatch match = email.match(f);
+			if(isfrom->isChecked() && match.hasMatch())
+				f = match.captured(1);
 			if(read.left(3).toUShort() != 250) {
 				error("Bad response from server:\n" + read);
 				return;
@@ -173,11 +175,9 @@ void QFakeMail::readed()
 		}
 		case RCPT_TO: {
 			QString t = to->text();
-			if(email.indexIn(t) != -1) {
-				QStringList list = email.capturedTexts();
-				if(list.size() > 1)
-					t = list[1];
-			}
+			QRegularExpressionMatch match = email.match(t);
+			if(match.hasMatch())
+				t = match.captured(1);
 			if(read.left(3).toUShort() != 250) {
 				error("Bad response from server:\n" + read);
 				return;
@@ -223,7 +223,7 @@ void QFakeMail::readed()
 					data += b64.mid(i, 76) + "\r\n";
 			} else {
 				data += "Content-Transfer-Encoding: 7bit\r\n\r\n";
-				data += body.replace("\r\n.\r\n", "\r\n..\r\n");
+				data += body.replace("\r\n.\r\n", "\r\n..\r\n").toUtf8();
 			}
 			data += "\r\n\r\n";
 			sock.write(data);
@@ -333,5 +333,5 @@ void QFakeMail::reEnableAll()
 {
 	pd->deleteLater();
 	setEnabled(true);
-	QApplication::setOverrideCursor(Qt::ArrowCursor);
+	QApplication::restoreOverrideCursor();
 }

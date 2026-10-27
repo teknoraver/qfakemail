@@ -17,9 +17,6 @@
  ****************************************************************************/
 
 #include <QApplication>
-#include <QMainWindow>
-//#include <QPlastiqueStyle>
-#include <QDesktopWidget>
 #include "qfakemail.h"
 
 int main(int argc, char *argv[])
@@ -27,10 +24,7 @@ int main(int argc, char *argv[])
 	QApplication a(argc, argv);
 	a.setOrganizationName("teknoraver");
 	a.setApplicationName("QFakeMail");
-//	QApplication::setStyle(new QPlastiqueStyle());
-//	QApplication::setPalette(QApplication::style()->standardPalette());
 	QFakeMail qfm;
-	qfm.move((QApplication::desktop()->screenGeometry(&qfm).width() - qfm.width()) / 2, (QApplication::desktop()->screenGeometry(&qfm).height() - qfm.height()) / 2);
-	qfm.setVisible(true);
+	qfm.show();
 	return a.exec();
 }
