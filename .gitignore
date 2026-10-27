@@ -1,9 +1,2 @@
-*.o
-Makefile*
-debug/
-release/
-ui_*.h
-moc_*.cpp
-qrc_*.cpp
-qfakemail
-*_plugin_import.cpp
+/build*/
+/CMakeLists.txt.user*

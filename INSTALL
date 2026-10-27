@@ -1,9 +1,9 @@
 Installation note:
 
-Make sure you have Qt4 installed and configured.
+Make sure you have Qt6 and CMake installed.
 Enter the qfakemail directory and type:
 
-qmake
-make
+cmake -B build
+cmake --build build
 
-qfakemail will be built in bin/
+qfakemail will be built in build/
