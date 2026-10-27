@@ -1,9 +1,0 @@
-Installation note:
-
-Make sure you have Qt6 and CMake installed.
-Enter the qfakemail directory and type:
-
-cmake -B build
-cmake --build build
-
-qfakemail will be built in build/
