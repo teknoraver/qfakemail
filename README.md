@@ -7,6 +7,8 @@ lists, windows, and signals and slots.
 It sends a plain text message, optionally with attachments, through any SMTP server,
 and lets you choose the sender address.
 
+<p align="center"><img src="https://github.com/user-attachments/assets/be379d9e-5829-47f1-a35f-79c62edf0759" alt="QFakeMail main window" width="322"></p>
+
 ## Build
 
 Requirements: CMake 3.19 or newer and Qt 6 (Widgets, Network).
