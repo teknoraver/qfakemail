@@ -65,7 +65,7 @@ void QFakeMail::about()
 {
 	QIcon old = windowIcon();
 	setWindowIcon(QIcon(":/icons/matteo.png"));
-	QMessageBox::about(this, "About QFakeMail", "QFakeMail - a fake mailer<br>by Matteo Croce <a href=\"http://teknoraver.net/\">http://teknoraver.net/</a>");
+	QMessageBox::about(this, "About QFakeMail", "QFakeMail - a fake mailer<br>by Matteo Croce <a href=\"https://matteocroce.it/\">https://matteocroce.it/</a>");
 	setWindowIcon(old);
 }
 
